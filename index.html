@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>la calificadora</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* layout: una columna centrada, bloques de color planos tipo empaque, ojos que siguen el cursor */
+:root{
+  --paper:#F7F2EA;
+  --ink:#16110F;
+  --soft:#EDE3D6;
+  --line:#D9CBB8;
+  --lemon:#F2C218;
+  --tomato:#E23B27;
+  --basil:#27A04A;
+  --chili:#F2691B;
+  --fg:var(--ink);
+  --bg:var(--paper);
+  --card:#FFFFFF;
+  --muted:#7A6A5C;
+  --font:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141110;--bg:#141110;--fg:#F7F2EA;--ink:#0C0A09;
+    --soft:#241E1A;--line:#3A312B;--card:#1E1916;--muted:#A89786;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141110;--bg:#141110;--fg:#F7F2EA;--ink:#0C0A09;
+  --soft:#241E1A;--line:#3A312B;--card:#1E1916;--muted:#A89786;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:17px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:22px 48px;
+}
+.wrap{max-width:720px;margin:0 auto}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+
+/* ojos */
+.eyes{display:inline-flex;gap:.28em;vertical-align:middle}
+.eye{width:var(--es,30px);height:var(--es,30px);border-radius:50%;background:#fff;position:relative;display:inline-block;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pupil{position:absolute;width:56%;height:56%;left:22%;top:22%;border-radius:50%;background:#0C0A09;transition:transform .14s ease-out}
+@media (prefers-reduced-motion: reduce){.pupil{transition:none}}
+
+/* cabecera */
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-weight:600;font-size:clamp(28px,7vw,40px);letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:15px;margin:2px 0 22px}
+.who{margin-left:auto;font-size:14px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 14px}
+
+/* botones */
+.big{
+  width:100%;border:none;border-radius:20px;background:var(--ink);color:var(--paper);
+  font-size:21px;font-weight:600;padding:20px 22px;letter-spacing:-.01em;
+}
+.big.alt{background:var(--lemon);color:#16110F}
+.ghost{background:transparent;border:2px solid var(--line);color:var(--fg);border-radius:999px;padding:10px 18px;font-size:15px;font-weight:500}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* input nombre */
+.field{display:block;margin:0 0 14px}
+.field span{display:block;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+input[type=text]{
+  width:100%;font-family:inherit;font-size:20px;padding:16px 18px;border-radius:18px;
+  border:2px solid var(--line);background:var(--card);color:var(--fg);
+}
+
+/* tarjetas equipo */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.team{
+  border:none;border-radius:22px;padding:18px 16px 16px;text-align:left;color:#16110F;
+  display:flex;flex-direction:column;gap:14px;min-height:150px;position:relative;overflow:hidden;
+}
+.team .nm{font-size:19px;font-weight:600;line-height:1.2;word-break:break-word}
+.team .st{font-size:13px;font-weight:500;background:rgba(22,17,15,.14);border-radius:999px;padding:4px 10px;align-self:flex-start}
+.team .st.ok{background:#16110F;color:#F7F2EA}
+.t0{background:var(--lemon)}.t1{background:var(--tomato);color:#FFF4EE}.t1 .st{background:rgba(255,255,255,.22)}.t1 .st.ok{background:#16110F;color:#F7F2EA}
+.t2{background:var(--basil);color:#F3FFF4}.t2 .st{background:rgba(255,255,255,.22)}.t2 .st.ok{background:#16110F;color:#F7F2EA}
+.t3{background:var(--chili);color:#FFF6EE}.t3 .st{background:rgba(255,255,255,.22)}.t3 .st.ok{background:#16110F;color:#F7F2EA}
+
+/* pantalla de calificar */
+.banner{border-radius:24px;padding:22px;display:flex;align-items:center;gap:16px;color:#16110F;margin-bottom:8px}
+.banner h2{font-size:clamp(24px,6vw,32px);font-weight:600;line-height:1.1}
+.crit{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;margin-top:14px}
+.crit h3{font-size:18px;font-weight:600;margin-bottom:4px}
+.crit p{font-size:14px;color:var(--muted);margin-bottom:12px}
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.scale button{
+  border:2px solid var(--line);background:var(--card);color:var(--fg);
+  border-radius:14px;padding:14px 0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;
+  transition:transform .08s ease;
+}
+.scale button:active{transform:scale(.94)}
+.scale button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+@media (min-width:560px){.scale{grid-template-columns:repeat(10,minmax(0,1fr))}.scale button{font-size:18px;padding:12px 0}}
+
+/* resultados */
+.res{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;margin-top:12px;display:flex;gap:16px;align-items:center}
+.res .swatch{width:52px;height:52px;border-radius:16px;flex:none}
+.res .info{flex:1;min-width:0}
+.res .nm{font-size:19px;font-weight:600}
+.res .bd{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.score{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.medal{font-size:13px;font-weight:600;background:var(--lemon);color:#16110F;border-radius:999px;padding:3px 10px;display:inline-block;margin-bottom:4px}
+.note{font-size:14px;color:var(--muted);margin-top:18px}
+.bar{height:10px;border-radius:999px;background:var(--soft);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:999px}
+hr{border:none;border-top:2px dashed var(--line);margin:26px 0}
+
+/* panel del profe */
+.evr{display:flex;align-items:center;gap:12px;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px 14px;margin-top:10px}
+.evr .info{flex:1;min-width:0}
+.evr .nm{font-size:17px;font-weight:600;word-break:break-word}
+.evr .bd{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.evr .del{border:2px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;flex:none}
+.evr .del:hover{border-color:var(--tomato);color:var(--tomato)}
+.tablewrap{overflow-x:auto;border:2px solid var(--line);border-radius:18px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+thead th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tbody tr+tr td{border-top:1px solid var(--line)}
+td.fin{font-weight:700;font-size:16px}
+.dot{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:8px;vertical-align:-1px}
+.big.dang{background:var(--tomato);color:#FFF4EE}
+.big.dang.arm{background:var(--ink);color:var(--paper)}
+.danger{background:var(--soft);border:2px solid var(--line);border-radius:22px;padding:16px}
+.stack{display:flex;flex-direction:column;gap:10px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyes" style="--es:38px"><span class="eye"><span class="pupil"></span></span><span class="eye"><span class="pupil"></span></span></span>
+    <div>
+      <h1 class="brand">la calificadora</h1>
+    </div>
+    <span class="who" id="who" hidden></span>
+  </header>
+  <p class="sub" id="sub">prototipos · 4 equipos · 4 criterios</p>
+
+  <!-- gate -->
+  <section id="gate">
+    <label class="field" for="nombre"><span>¿quién califica?</span>
+      <input type="text" id="nombre" placeholder="tu nombre" autocomplete="name" maxlength="40">
+    </label>
+    <button class="big" id="start">empezar a calificar</button>
+    <p class="note" id="gateNote">tus calificaciones se guardan solas y se promedian con las de los demás evaluadores.</p>
+  </section>
+
+  <!-- home -->
+  <section id="home" hidden>
+    <div class="grid" id="teams"></div>
+    <div class="stack">
+      <button class="big alt" id="toRes">ver resultados</button>
+      <div class="row">
+        <button class="ghost" id="changeName">cambiar de evaluador</button>
+        <button class="ghost" id="editNames" hidden>editar nombres de equipos</button>
+        <button class="ghost" id="toAdmin">panel del profe</button>
+      </div>
+      <p class="note" id="syncNote" style="margin-top:6px"></p>
+    </div>
+  </section>
+
+  <!-- rate -->
+  <section id="rate" hidden>
+    <div class="banner" id="rateBanner">
+      <span class="eyes" style="--es:34px"><span class="eye"><span class="pupil"></span></span><span class="eye"><span class="pupil"></span></span></span>
+      <h2 id="rateName"></h2>
+    </div>
+    <div id="crits"></div>
+    <div class="stack" style="margin-top:18px">
+      <button class="big" id="done">listo</button>
+      <button class="ghost" id="back">volver</button>
+    </div>
+  </section>
+
+  <!-- results -->
+  <section id="res" hidden>
+    <h2 style="font-size:26px;font-weight:600;margin-bottom:4px">resultados</h2>
+    <p class="sub" id="resSub" style="margin-bottom:14px"></p>
+    <div id="resList"></div>
+    <hr>
+    <div class="stack">
+      <button class="big" id="backHome">seguir calificando</button>
+    </div>
+    <p class="note">la calificación final es el promedio de los 4 criterios, de todos los evaluadores, en escala del 1 al 10.</p>
+  </section>
+
+  <!-- admin -->
+  <section id="admin" hidden>
+    <h2 style="font-size:26px;font-weight:600;margin-bottom:4px">panel del profe</h2>
+
+    <div id="admGate">
+      <p class="sub" style="margin-bottom:16px">esta sección es solo para quien coordina la evaluación.</p>
+      <label class="field" for="pwd"><span>contraseña</span>
+        <input type="password" id="pwd" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="•••••">
+      </label>
+      <div class="stack">
+        <button class="big" id="pwdGo">entrar</button>
+        <button class="ghost" id="gateBack">volver</button>
+      </div>
+      <p class="note" id="pwdNote"></p>
+    </div>
+
+    <div id="admBody" hidden>
+    <p class="sub" id="admSub" style="margin-bottom:14px"></p>
+
+    <div id="admTabla"></div>
+
+    <h3 style="font-size:19px;font-weight:600;margin:26px 0 8px">quién ha calificado</h3>
+    <div id="admEvals"></div>
+
+    <hr>
+    <div class="danger" id="zonaBorrar">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">borrar todo</h3>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:12px">elimina las calificaciones de todos los evaluadores. los nombres de los equipos se quedan.</p>
+      <button class="big dang" id="reset">borrar todas las calificaciones</button>
+    </div>
+    
+    <div class="stack" style="margin-top:14px">
+      <button class="ghost" id="admBack">volver</button>
+      <button class="ghost" id="salirAdm">salir del panel</button>
+    </div>
+    </div>
+  </section>
+</div>
+<script>
+(function(){
+  "use strict";
+  /* Con SHEET_URL: todo va a la hoja de Google (la contraseña la revisa Google, no esta página).
+     Sin SHEET_URL: modo prueba, solo en este navegador. */
+  var CONFIG={ SHEET_URL:"https://script.google.com/macros/s/AKfycbxgRfmBRf9LcIbAgWoy2x1MF-SRa073z_nB3G62WXBZqZLII_olX_I3B4MqSbXQRY0Z/exec" };
+
+  var CRIT=[
+    {k:"cre",n:"creatividad",d:"qué tan original e inesperada es la propuesta"},
+    {k:"usa",n:"usabilidad",d:"qué tan claro y fácil de usar es el prototipo"},
+    {k:"con",n:"congruencia con el mercado meta",d:"qué tanto embona con el usuario al que le apunta"},
+    {k:"ia", n:"buen uso de la ia",d:"qué tan bien aprovecha la ia, más allá del adorno"}
+  ];
+  var COLORS=["--lemon","--tomato","--basil","--chili"];
+  var DEFAULT=["equipo 1","equipo 2","equipo 3","equipo 4"];
+
+  var teams=DEFAULT.slice();
+  var me={id:"",nombre:"",puntajes:{},saved:false};
+  var todos=[];            // público: [{id, puntajes}]
+  var admTodos=[];         // panel: [{id, nombre, puntajes}]
+  var current=0, admOK=false, admPass="";
+
+  var $=function(id){return document.getElementById(id)};
+  function visible(id){ return !$(id).hidden; }
+  function show(id){
+    ["gate","home","rate","res","admin"].forEach(function(s){ $(s).hidden = (s!==id); });
+    window.scrollTo(0,0);
+  }
+  function col(i){return getComputedStyle(document.documentElement).getPropertyValue(COLORS[i%4]).trim()}
+  function eyesHTML(size){
+    return '<span class="eyes" style="--es:'+size+'px"><span class="eye"><span class="pupil"></span></span><span class="eye"><span class="pupil"></span></span></span>';
+  }
+  function esc(s){var d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
+
+  /* ---------- ojos que siguen el cursor ---------- */
+  var px=0.5, py=0.35;
+  function moveEyes(){
+    var eyes=document.querySelectorAll(".eye");
+    for(var i=0;i<eyes.length;i++){
+      var r=eyes[i].getBoundingClientRect();
+      if(!r.width) continue;
+      var dx=px*window.innerWidth-(r.left+r.width/2);
+      var dy=py*window.innerHeight-(r.top+r.height/2);
+      var a=Math.atan2(dy,dx), m=Math.min(1,Math.hypot(dx,dy)/260)*(r.width*0.17);
+      var p=eyes[i].firstElementChild;
+      if(p) p.style.transform="translate("+(Math.cos(a)*m).toFixed(1)+"px,"+(Math.sin(a)*m).toFixed(1)+"px)";
+    }
+  }
+  window.addEventListener("pointermove",function(e){px=e.clientX/window.innerWidth;py=e.clientY/window.innerHeight;moveEyes();},{passive:true});
+  window.addEventListener("resize",moveEyes);
+  setInterval(moveEyes,900);
+
+  /* ---------- este dispositivo ---------- */
+  function nuevoId(){
+    var s=""; var c="abcdefghijklmnopqrstuvwxyz0123456789";
+    for(var i=0;i<16;i++) s+=c[Math.floor(Math.random()*c.length)];
+    return "ev-"+s;
+  }
+  function saveLocal(){ try{ localStorage.setItem("calificadora",JSON.stringify(me)); }catch(e){} }
+  function loadLocal(){
+    try{ var r=localStorage.getItem("calificadora"); if(r){ var v=JSON.parse(r); if(v&&v.puntajes){ me.nombre=v.nombre||""; me.puntajes=v.puntajes; me.id=v.id||""; me.saved=!!v.saved; } } }catch(e){}
+    if(!me.id){ me.id=nuevoId(); saveLocal(); }
+  }
+
+  /* ---------- hoja de Google ---------- */
+  function api(action,data){
+    if(!CONFIG.SHEET_URL) return Promise.resolve(demo(action));
+    var body={action:action}; for(var k in (data||{})) body[k]=data[k];
+    return fetch(CONFIG.SHEET_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
+      .then(function(r){ return r.json(); })
+      .then(function(o){ if(!o.ok) throw new Error(o.error||"algo falló"); return o; });
+  }
+  function demo(action){
+    if(action==="load") return {ok:true,equipos:teams,votos:me.saved?[{id:me.id,puntajes:me.puntajes}]:[]};
+    if(action==="save") return {ok:true};
+    throw new Error("el panel necesita la hoja de Google conectada.");
+  }
+
+  /* guardar: espera un momento para juntar varios toques en un solo envío */
+  var tSave=null, guardando=false, otraVez=false, ultimoGuardado=0;
+  function sync(txt){ $("syncNote").textContent=txt; }
+  function push(){
+    clearTimeout(tSave);
+    tSave=setTimeout(enviar,600);
+  }
+  function enviar(){
+    clearTimeout(tSave); tSave=null;
+    if(!me.nombre) return;
+    if(guardando){ otraVez=true; return; }
+    guardando=true; sync("guardando…");
+    api("save",{id:me.id,nombre:me.nombre,puntajes:me.puntajes}).then(function(){
+      me.saved=true; saveLocal(); ultimoGuardado=Date.now(); sync("tus calificaciones están guardadas.");
+    }).catch(function(){
+      sync("no se pudo guardar. reintento en unos segundos…");
+      setTimeout(push,5000);
+    }).then(function(){
+      guardando=false;
+      if(otraVez){ otraVez=false; enviar(); }
+    });
+  }
+  function pendiente(){ return guardando || tSave!==null; }
+
+  /* leer lo de todos */
+  var cargando=false;
+  function refresh(){
+    if(cargando) return Promise.resolve();
+    cargando=true;
+    var inicio=Date.now();
+    return api("load").then(function(o){
+      if(o.equipos && o.equipos.length===4) teams=o.equipos.slice();
+      var arr=o.votos||[];
+      var mio=arr.filter(function(r){ return r.id===me.id; })[0];
+      if(mio && !Object.keys(me.puntajes).length){ me.puntajes=mio.puntajes||{}; me.saved=true; saveLocal(); }
+      // el profe borró mis calificaciones
+      if(!mio && me.saved && !pendiente() && inicio>ultimoGuardado){ me.puntajes={}; me.saved=false; saveLocal(); }
+      arr=arr.filter(function(r){ return r.id!==me.id; });
+      if(Object.keys(me.puntajes).length) arr.push({id:me.id,puntajes:me.puntajes});
+      todos=arr;
+      if(visible("home")) renderTeams();
+      if(visible("res")) renderRes();
+    }).catch(function(){}).then(function(){ cargando=false; });
+  }
+  function mergeMine(){
+    todos=todos.filter(function(r){ return r.id!==me.id; });
+    if(Object.keys(me.puntajes).length) todos.push({id:me.id,puntajes:me.puntajes});
+  }
+
+  /* ---------- render ---------- */
+  function completos(p){
+    var n=0; for(var i=0;i<CRIT.length;i++){ if(p && p[CRIT[i].k]) n++; } return n;
+  }
+  function renderTeams(){
+    var g=$("teams"); if(document.getElementById("saveNames")) return; // editando nombres
+    g.innerHTML="";
+    teams.forEach(function(nm,i){
+      var p=me.puntajes["e"+i]||{}, c=completos(p);
+      var b=document.createElement("button");
+      b.className="team t"+i;
+      b.innerHTML=eyesHTML(30)+'<div class="nm">'+esc(nm)+'</div><span class="st'+(c===4?" ok":"")+'">'+(c===4?"calificado":c+" de 4")+'</span>';
+      b.addEventListener("click",function(){ openTeam(i); });
+      g.appendChild(b);
+    });
+    $("editNames").hidden=!admOK;
+    moveEyes();
+  }
+
+  function openTeam(i){
+    current=i;
+    $("rateName").textContent=teams[i];
+    $("rateBanner").style.background=col(i);
+    $("rateBanner").style.color=(i===0?"#16110F":"#FFF6EE");
+    var c=$("crits"); c.innerHTML="";
+    CRIT.forEach(function(cr){
+      var box=document.createElement("div");
+      box.className="crit";
+      var h='<h3>'+cr.n+'</h3><p>'+cr.d+'</p><div class="scale" role="group" aria-label="'+cr.n+'">';
+      for(var v=1;v<=10;v++) h+='<button type="button" data-v="'+v+'" aria-pressed="false">'+v+'</button>';
+      box.innerHTML=h+'</div>';
+      box.querySelector(".scale").addEventListener("click",function(ev){
+        var t=ev.target.closest("button[data-v]"); if(!t) return;
+        setScore(cr.k, parseInt(t.dataset.v,10));
+        paint(box,cr.k);
+      });
+      c.appendChild(box);
+      paint(box,cr.k);
+    });
+    show("rate"); moveEyes();
+  }
+  function paint(box,k){
+    var p=me.puntajes["e"+current]||{}, v=p[k];
+    box.querySelectorAll("button[data-v]").forEach(function(b){
+      b.setAttribute("aria-pressed", String(parseInt(b.dataset.v,10)===v));
+    });
+  }
+  function setScore(k,v){
+    var key="e"+current;
+    if(!me.puntajes[key]) me.puntajes[key]={};
+    me.puntajes[key][k]=v;
+    saveLocal(); mergeMine(); push();
+  }
+
+  /* ---------- resultados ---------- */
+  function promedio(lista,i){
+    var suma=0,n=0;
+    lista.forEach(function(r){
+      var p=(r.puntajes||{})["e"+i]; if(!p) return;
+      var s=0,c=0;
+      CRIT.forEach(function(cr){ if(p[cr.k]){ s+=p[cr.k]; c++; } });
+      if(c){ suma+=s/c; n++; }
+    });
+    return n? {avg:suma/n, n:n} : {avg:null, n:0};
+  }
+  function porCriterio(lista,i,k){
+    var s=0,n=0;
+    lista.forEach(function(r){
+      var p=(r.puntajes||{})["e"+i];
+      if(p&&p[k]){ s+=p[k]; n++; }
+    });
+    return n? s/n : null;
+  }
+  function renderRes(){
+    var list=$("resList"); list.innerHTML="";
+    var filas=teams.map(function(nm,i){ var r=promedio(todos,i); return {i:i,nm:nm,avg:r.avg,n:r.n}; });
+    filas.sort(function(a,b){ return (b.avg===null?-1:b.avg)-(a.avg===null?-1:a.avg); });
+    var evals=todos.filter(function(r){ return Object.keys(r.puntajes||{}).length; }).length;
+    $("resSub").textContent = evals===1 ? "1 evaluador" : evals+" evaluadores";
+    filas.forEach(function(f,rank){
+      var d=document.createElement("div"); d.className="res";
+      var detalle=CRIT.map(function(cr){
+        var v=porCriterio(todos,f.i,cr.k);
+        return cr.n.split(" ")[0]+" "+(v===null?"–":v.toFixed(1));
+      }).join(" · ");
+      d.innerHTML=
+        '<div class="swatch" style="background:'+col(f.i)+'"></div>'+
+        '<div class="info">'+(rank===0&&f.avg!==null?'<span class="medal">1er lugar</span>':'')+
+          '<div class="nm">'+esc(f.nm)+'</div>'+
+          '<div class="bd">'+detalle+'</div>'+
+          '<div class="bar"><i style="width:'+(f.avg?Math.round(f.avg*10):0)+'%;background:'+col(f.i)+'"></i></div>'+
+        '</div>'+
+        '<div class="score">'+(f.avg===null?"–":f.avg.toFixed(1))+'</div>';
+      list.appendChild(d);
+    });
+    show("res");
+  }
+
+  /* ---------- panel del profe ---------- */
+  function renderAdmin(){
+    var activos=admTodos.filter(function(r){ return Object.keys(r.puntajes||{}).length; });
+    $("admSub").textContent = (activos.length===1?"1 evaluador":activos.length+" evaluadores")+" · "+teams.length+" equipos";
+
+    var h='<div class="tablewrap"><table><thead><tr><th>equipo</th>';
+    CRIT.forEach(function(cr){ h+='<th>'+cr.n.split(" ")[0]+'</th>'; });
+    h+='<th>final</th></tr></thead><tbody>';
+    teams.forEach(function(nm,i){
+      h+='<tr><td><span class="dot" style="background:'+col(i)+'"></span>'+esc(nm)+'</td>';
+      CRIT.forEach(function(cr){
+        var v=porCriterio(activos,i,cr.k);
+        h+='<td>'+(v===null?"–":v.toFixed(1))+'</td>';
+      });
+      var p=promedio(activos,i);
+      h+='<td class="fin">'+(p.avg===null?"–":p.avg.toFixed(1))+'</td></tr>';
+    });
+    $("admTabla").innerHTML=h+'</tbody></table></div>';
+
+    var e=$("admEvals"); e.innerHTML="";
+    if(!activos.length){
+      e.innerHTML='<p class="note" style="margin-top:0">todavía nadie ha calificado.</p>';
+    }
+    activos.forEach(function(r){
+      var hechos=0, suma=0, cuenta=0;
+      teams.forEach(function(_,i){
+        var p=(r.puntajes||{})["e"+i]; if(!p) return;
+        hechos+= (completos(p)===4?1:0);
+        CRIT.forEach(function(cr){ if(p[cr.k]){ suma+=p[cr.k]; cuenta++; } });
+      });
+      var row=document.createElement("div"); row.className="evr";
+      row.innerHTML='<div class="info"><div class="nm">'+esc(r.nombre||"anónimo")+(r.id===me.id?' (tú)':'')+'</div>'+
+        '<div class="bd">'+hechos+' de '+teams.length+' equipos completos · promedio que otorga '+(cuenta?(suma/cuenta).toFixed(1):"–")+'</div></div>';
+      var b=document.createElement("button");
+      b.className="del"; b.type="button"; b.textContent="borrar";
+      b.addEventListener("click",function(){
+        if(b.dataset.arm!=="1"){ b.dataset.arm="1"; b.textContent="¿seguro?"; setTimeout(function(){ if(b.dataset.arm==="1"){b.dataset.arm="";b.textContent="borrar";} },4000); return; }
+        b.disabled=true; b.textContent="borrando…";
+        borrarEvaluador(r.id);
+      });
+      row.appendChild(b);
+      e.appendChild(row);
+    });
+    $("admGate").hidden=true;
+    $("admBody").hidden=false;
+    show("admin");
+  }
+  function cargarAdmin(){
+    return api("admin",{pass:admPass}).then(function(o){
+      if(o.equipos && o.equipos.length===4) teams=o.equipos.slice();
+      admTodos=o.votos||[];
+      if(visible("admin") && !$("admBody").hidden) renderAdmin();
+      return o;
+    });
+  }
+
+  function pedirClave(){
+    $("admGate").hidden=false;
+    $("admBody").hidden=true;
+    $("pwdNote").textContent="";
+    $("pwd").value="";
+    show("admin");
+    setTimeout(function(){ $("pwd").focus(); },60);
+  }
+  function probarClave(){
+    var v=$("pwd").value.trim(); if(!v) return;
+    $("pwdGo").disabled=true; $("pwdNote").textContent="revisando…";
+    api("admin",{pass:v}).then(function(o){
+      admOK=true; admPass=v;
+      if(o.equipos && o.equipos.length===4) teams=o.equipos.slice();
+      admTodos=o.votos||[];
+      renderAdmin();
+    }).catch(function(err){
+      $("pwdNote").textContent=/contraseña/i.test(err.message)?"esa no es. inténtalo otra vez.":"no se pudo conectar: "+err.message;
+      $("pwd").value=""; $("pwd").focus();
+    }).then(function(){ $("pwdGo").disabled=false; });
+  }
+  $("pwdGo").addEventListener("click",probarClave);
+  $("pwd").addEventListener("keydown",function(e){ if(e.key==="Enter") probarClave(); });
+  $("gateBack").addEventListener("click",irHome);
+  $("salirAdm").addEventListener("click",function(){ admOK=false; admPass=""; admTodos=[]; irHome(); });
+
+  function aviso(txt){ $("admSub").textContent=txt; }
+  function borrarEvaluador(id){
+    api("deleteOne",{pass:admPass,id:id}).then(function(){
+      if(id===me.id){ me.puntajes={}; me.saved=false; saveLocal(); mergeMine(); }
+      return cargarAdmin();
+    }).catch(function(){ aviso("no se pudo borrar ese registro."); });
+  }
+
+  var resetArmado=false;
+  $("reset").addEventListener("click",function(){
+    var b=$("reset");
+    if(!resetArmado){
+      resetArmado=true; b.classList.add("arm");
+      b.textContent="toca otra vez para borrar todo";
+      setTimeout(function(){ if(resetArmado){ resetArmado=false; b.classList.remove("arm"); b.textContent="borrar todas las calificaciones"; } },5000);
+      return;
+    }
+    resetArmado=false; b.classList.remove("arm"); b.textContent="borrando…"; b.disabled=true;
+    api("reset",{pass:admPass}).then(function(){
+      me.puntajes={}; me.saved=false; saveLocal(); todos=[];
+      return cargarAdmin();
+    }).catch(function(){ aviso("no se pudo borrar. inténtalo otra vez."); })
+    .then(function(){ b.disabled=false; b.textContent="borrar todas las calificaciones"; });
+  });
+  $("admBack").addEventListener("click",irHome);
+  $("toAdmin").addEventListener("click",function(){ if(admOK){ renderAdmin(); cargarAdmin().catch(function(){}); } else pedirClave(); });
+
+  /* ---------- eventos ---------- */
+  function irHome(){ var sn=document.getElementById("saveNames"); if(sn) sn.remove(); renderTeams(); show("home"); refresh(); }
+  $("start").addEventListener("click",function(){
+    var v=$("nombre").value.trim();
+    if(!v){ $("nombre").focus(); $("gateNote").textContent="escribe tu nombre para empezar."; return; }
+    var cambio = v!==me.nombre;
+    me.nombre=v; saveLocal();
+    if(cambio && Object.keys(me.puntajes).length) push();
+    $("who").textContent=v; $("who").hidden=false;
+    irHome();
+  });
+  $("nombre").addEventListener("keydown",function(e){ if(e.key==="Enter") $("start").click(); });
+  $("changeName").addEventListener("click",function(){ $("nombre").value=me.nombre||""; show("gate"); $("nombre").focus(); });
+  $("toRes").addEventListener("click",function(){ renderRes(); refresh(); });
+  $("backHome").addEventListener("click",irHome);
+  $("back").addEventListener("click",function(){ if(tSave) enviar(); irHome(); });
+  $("done").addEventListener("click",function(){ if(tSave) enviar(); irHome(); });
+  $("editNames").addEventListener("click",inlineEdit);
+
+  function inlineEdit(){
+    if(!admOK) return;
+    var viejo=document.getElementById("saveNames"); if(viejo) viejo.remove();
+    var g=$("teams"); g.innerHTML="";
+    teams.forEach(function(nm,i){
+      var w=document.createElement("div");
+      w.className="team t"+i;
+      w.innerHTML='<label class="field" style="margin:0"><span>equipo '+(i+1)+'</span><input type="text" id="tn'+i+'" maxlength="28" value="'+esc(nm)+'"></label>';
+      g.appendChild(w);
+    });
+    var b=document.createElement("button");
+    b.className="big"; b.id="saveNames"; b.textContent="guardar nombres"; b.style.marginBottom="10px";
+    b.addEventListener("click",function(){
+      var nombres=[];
+      for(var i=0;i<4;i++){ nombres.push($("tn"+i).value.trim() || DEFAULT[i]); }
+      b.disabled=true; b.textContent="guardando…";
+      api("saveTeams",{pass:admPass,nombres:nombres}).then(function(o){
+        teams=(o.equipos||nombres).slice();
+        b.remove(); renderTeams();
+      }).catch(function(){ b.disabled=false; b.textContent="no se pudo guardar. toca para reintentar"; });
+    });
+    g.parentNode.insertBefore(b,g.nextSibling);
+  }
+
+  /* ---------- arranque ---------- */
+  loadLocal();
+  renderTeams();
+  if(me.nombre){ $("nombre").value=me.nombre; $("who").textContent=me.nombre; $("who").hidden=false; show("home"); }
+  if(!CONFIG.SHEET_URL) $("gateNote").textContent="modo prueba: se guarda solo en este dispositivo.";
+  moveEyes();
+  refresh();
+  if(me.nombre && Object.keys(me.puntajes).length && !me.saved) push();
+
+  setInterval(function(){
+    if(document.hidden) return;
+    if(visible("home")||visible("res")) refresh();
+    if(admOK && visible("admin") && !$("admBody").hidden) cargarAdmin().catch(function(){});
+  },10000);
+})();
+</script>
+</body>
+</html>
